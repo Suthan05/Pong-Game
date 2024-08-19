@@ -1,0 +1,121 @@
+import pygame
+import random
+
+# Initialize Pygame
+pygame.init()
+
+# Screen dimensions
+WIDTH, HEIGHT = 800, 600
+BG_COLOR = (0, 0, 0)
+WHITE = (255, 255, 255)
+
+# Paddle dimensions
+PADDLE_WIDTH, PADDLE_HEIGHT = 10, 100
+PADDLE_SPEED = 5
+
+# Ball dimensions and speed
+BALL_SIZE = 15
+BALL_SPEED_X = 4
+BALL_SPEED_Y = 4
+
+# Create the screen
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Pong Game")
+
+# Define the paddles
+class Paddle:
+    def __init__(self, x, y):
+        self.rect = pygame.Rect(x, y, PADDLE_WIDTH, PADDLE_HEIGHT)
+    
+    def draw(self):
+        pygame.draw.rect(screen, WHITE, self.rect)
+    
+    def move_up(self):
+        self.rect.y -= PADDLE_SPEED
+        if self.rect.top < 0:
+            self.rect.top = 0
+    
+    def move_down(self):
+        self.rect.y += PADDLE_SPEED
+        if self.rect.bottom > HEIGHT:
+            self.rect.bottom = HEIGHT
+
+# Define the ball
+class Ball:
+    def __init__(self, x, y):
+        self.rect = pygame.Rect(x, y, BALL_SIZE, BALL_SIZE)
+        self.dx = BALL_SPEED_X * random.choice((1, -1))
+        self.dy = BALL_SPEED_Y * random.choice((1, -1))
+    
+    def draw(self):
+        pygame.draw.ellipse(screen, WHITE, self.rect)
+    
+    def move(self):
+        self.rect.x += self.dx
+        self.rect.y += self.dy
+
+        # Ball collision with walls
+        if self.rect.top <= 0 or self.rect.bottom >= HEIGHT:
+            self.dy *= -1
+        if self.rect.left <= 0 or self.rect.right >= WIDTH:
+            self.reset()
+
+        # Ball collision with paddles
+        if self.rect.colliderect(player_paddle.rect) or self.rect.colliderect(opponent_paddle.rect):
+            self.dx *= -1
+
+    def reset(self):
+        # Reset ball to center and randomize direction
+        self.rect.x = WIDTH // 2 - BALL_SIZE // 2
+        self.rect.y = HEIGHT // 2 - BALL_SIZE // 2
+        self.dx = BALL_SPEED_X * random.choice((1, -1))
+        self.dy = BALL_SPEED_Y * random.choice((1, -1))
+
+# Create paddles
+player_paddle = Paddle(20, HEIGHT // 2 - PADDLE_HEIGHT // 2)
+opponent_paddle = Paddle(WIDTH - 30, HEIGHT // 2 - PADDLE_HEIGHT // 2)
+
+# Create the ball
+ball = Ball(WIDTH // 2 - BALL_SIZE // 2, HEIGHT // 2 - BALL_SIZE // 2)
+
+# Initialize clock and running flag
+clock = pygame.time.Clock()
+running = True
+
+while running:
+    # Event handling
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    # Paddle movement
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_w]:
+        player_paddle.move_up()
+    if keys[pygame.K_s]:
+        player_paddle.move_down()
+    if keys[pygame.K_UP]:
+        opponent_paddle.move_up()
+    if keys[pygame.K_DOWN]:
+        opponent_paddle.move_down()
+    
+    # Simple AI for the opponent paddle
+    if ball.rect.centery < opponent_paddle.rect.centery:
+        opponent_paddle.move_up()
+    elif ball.rect.centery > opponent_paddle.rect.centery:
+        opponent_paddle.move_down()
+    
+    # Move the ball
+    ball.move()
+    
+    # Draw everything
+    screen.fill(BG_COLOR)
+    pygame.draw.aaline(screen, WHITE, (WIDTH // 2, 0), (WIDTH // 2, HEIGHT))
+    player_paddle.draw()
+    opponent_paddle.draw()
+    ball.draw()
+    
+    pygame.display.flip()
+    clock.tick(60)
+
+pygame.quit()
